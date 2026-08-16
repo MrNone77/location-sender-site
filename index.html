@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ارسال موقعیت مکانی</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    .icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 20px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+    }
+    h1 { color: #333; margin-bottom: 10px; font-size: 24px; }
+    p { color: #666; margin-bottom: 30px; line-height: 1.6; }
+    .btn {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+    }
+    .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(102,126,234,0.4); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn.success { background: linear-gradient(135deg, #4caf50, #388e3c); }
+    .status {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 12px;
+      display: none;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .status.success {
+      display: block;
+      background: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #c8e6c9;
+    }
+    .status.error {
+      display: block;
+      background: #fbe9e7;
+      color: #c62828;
+      border: 1px solid #ffccbc;
+    }
+    .status.loading {
+      display: block;
+      background: #e3f2fd;
+      color: #1565c0;
+      border: 1px solid #bbdefb;
+    }
+    .coords { font-family: monospace; font-size: 13px; background: #f5f5f5; padding: 10px; border-radius: 8px; margin-top: 10px; }
+    .address-box {
+      background: #fff3e0;
+      border: 1px solid #ffe0b2;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 10px;
+      text-align: right;
+      font-size: 14px;
+      color: #e65100;
+    }
+    .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 3px solid #bbdefb;
+      border-top-color: #1565c0;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    footer { margin-top: 30px; font-size: 12px; color: #999; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">📍</div>
+    <h1>ارسال موقعیت مکانی</h1>
+    <p>برای ارسال موقعیت مکانی فعلی شما به تلگرام، روی دکمه زیر بزنید و اجازه دسترسی را بدهید.</p>
+    <button class="btn" id="btn" onclick="getLocation()">دریافت و ارسال موقعیت</button>
+    <div class="status" id="status"></div>
+    <footer>موقعیت فقط یک‌بار خوانده و بلافاصله ارسال می‌شود — ذخیره نمی‌شود.</footer>
+  </div>
+
+  <script>
+    const BOT_TOKEN = '8794011802:AAHZGkx5bcTXKKYvdrliLCQhksex98EbOv4';
+    const CHAT_ID = '5805247169';
+    const btn = document.getElementById('btn');
+    const statusEl = document.getElementById('status');
+
+    function setStatus(msg, type) {
+      statusEl.textContent = msg;
+      statusEl.className = 'status ' + type;
+    }
+
+    function resetButton() {
+      btn.disabled = false;
+      btn.textContent = 'دریافت و ارسال موقعیت';
+      btn.classList.remove('success');
+      btn.style.background = '';
+    }
+
+    function getLocation() {
+      if (!navigator.geolocation) {
+        setStatus('❌ مرورگر شما از موقعیت‌یابی پشتیبانی نمی‌کند.', 'error');
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'در حال دریافت موقعیت...';
+      setStatus('⏳ در حال خواندن موقعیت مکانی...', 'loading');
+
+      navigator.geolocation.getCurrentPosition(
+        pos => sendToTelegram(pos),
+        err => handleError(err),
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      );
+    }
+
+    function handleError(err) {
+      resetButton();
+      let msg = '❌ خطا: ';
+      switch (err.code) {
+        case 1: msg += 'دسترسی به موقعیت رد شد.'; break;
+        case 2: msg += 'موقعیت در دسترس نیست.'; break;
+        case 3: msg += 'زمان‌بر شدید (timeout).'; break;
+        default: msg += err.message;
+      }
+      setStatus(msg, 'error');
+    }
+
+    async function reverseGeocode(lat, lon) {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=fa`);
+        if (!res.ok) throw new Error('Geocoding failed');
+        const data = await res.json();
+        return data.display_name || 'آدرس یافت نشد';
+      } catch (e) {
+        console.warn('Reverse geocoding error:', e);
+        return 'آدرس قابل دریافت نیست';
+      }
+    }
+
+    async function sendToTelegram(pos) {
+      const { latitude, longitude, accuracy } = pos.coords;
+      const mapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+      const date = new Date().toLocaleString('fa-IR', { hour12: false });
+
+      // Get address
+      setStatus('⏳ در حال دریافت آدرس دقیق...', 'loading');
+      const address = await reverseGeocode(latitude, longitude);
+
+      const text = `📍 <b>موقعیت مکانی جدید</b>\n\n` +
+        `🏠 <b>آدرس:</b> ${address}\n\n` +
+        `🌍 <b>مختصات:</b> <code>${latitude.toFixed(6)}, ${longitude.toFixed(6)}</code>\n` +
+        `🎯 <b>دقت:</b> ~${Math.round(accuracy)} متر\n` +
+        `🕐 <b>زمان:</b> ${date}\n\n` +
+        `🗺 <a href="${mapsUrl}">باز کردن در Google Maps</a>`;
+
+      try {
+        const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: CHAT_ID,
+            text,
+            parse_mode: 'HTML',
+            disable_web_page_preview: false
+          })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          setStatus(`✅ ارسال شد!\n\n🏠 ${address}\n\n🌍 ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`, 'success');
+          btn.textContent = 'ارسال شد ✓ — دوباره بفرست';
+          btn.classList.add('success');
+          btn.disabled = false;  // مهم: دکمه دوباره فعال می‌شود
+        } else {
+          throw new Error(data.description || 'خطای ناشناخته');
+        }
+      } catch (e) {
+        setStatus(`❌ خطا در ارسال: ${e.message}`, 'error');
+        resetButton();
+      }
+    }
+  </script>
+</body>
+</html>
