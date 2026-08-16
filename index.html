@@ -78,17 +78,6 @@
       color: #1565c0;
       border: 1px solid #bbdefb;
     }
-    .coords { font-family: monospace; font-size: 13px; background: #f5f5f5; padding: 10px; border-radius: 8px; margin-top: 10px; }
-    .address-box {
-      background: #fff3e0;
-      border: 1px solid #ffe0b2;
-      border-radius: 8px;
-      padding: 12px;
-      margin-top: 10px;
-      text-align: right;
-      font-size: 14px;
-      color: #e65100;
-    }
     .spinner {
       display: inline-block;
       width: 18px;
@@ -115,8 +104,7 @@
   </div>
 
   <script>
-    const BOT_TOKEN = '8794011802:AAHZGkx5bcTXKKYvdrliLCQhksex98EbOv4';
-    const CHAT_ID = '5805247169';
+    const WORKER_URL = 'https://location-sender.chlorinated-chips.workers.dev';
     const btn = document.getElementById('btn');
     const statusEl = document.getElementById('status');
 
@@ -142,7 +130,7 @@
       setStatus('⏳ در حال خواندن موقعیت مکانی...', 'loading');
 
       navigator.geolocation.getCurrentPosition(
-        pos => sendToTelegram(pos),
+        pos => sendToWorker(pos),
         err => handleError(err),
         { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
       );
@@ -160,53 +148,27 @@
       setStatus(msg, 'error');
     }
 
-    async function reverseGeocode(lat, lon) {
-      try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=fa`);
-        if (!res.ok) throw new Error('Geocoding failed');
-        const data = await res.json();
-        return data.display_name || 'آدرس یافت نشد';
-      } catch (e) {
-        console.warn('Reverse geocoding error:', e);
-        return 'آدرس قابل دریافت نیست';
-      }
-    }
-
-    async function sendToTelegram(pos) {
+    async function sendToWorker(pos) {
       const { latitude, longitude, accuracy } = pos.coords;
       const mapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
       const date = new Date().toLocaleString('fa-IR', { hour12: false });
 
-      // Get address
-      setStatus('⏳ در حال دریافت آدرس دقیق...', 'loading');
-      const address = await reverseGeocode(latitude, longitude);
-
-      const text = `📍 <b>موقعیت مکانی جدید</b>\n\n` +
-        `🏠 <b>آدرس:</b> ${address}\n\n` +
-        `🌍 <b>مختصات:</b> <code>${latitude.toFixed(6)}, ${longitude.toFixed(6)}</code>\n` +
-        `🎯 <b>دقت:</b> ~${Math.round(accuracy)} متر\n` +
-        `🕐 <b>زمان:</b> ${date}\n\n` +
-        `🗺 <a href="${mapsUrl}">باز کردن در Google Maps</a>`;
+      setStatus('⏳ در حال ارسال به سرور...', 'loading');
 
       try {
-        const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        const res = await fetch(WORKER_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: CHAT_ID,
-            text,
-            parse_mode: 'HTML',
-            disable_web_page_preview: false
-          })
+          body: JSON.stringify({ latitude, longitude, accuracy })
         });
         const data = await res.json();
         if (data.ok) {
-          setStatus(`✅ ارسال شد!\n\n🏠 ${address}\n\n🌍 ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`, 'success');
+          setStatus(`✅ ارسال شد!\n\n🌍 ${latitude.toFixed(6)}, ${longitude.toFixed(6)}\n🕐 ${date}`, 'success');
           btn.textContent = 'ارسال شد ✓ — دوباره بفرست';
           btn.classList.add('success');
-          btn.disabled = false;  // مهم: دکمه دوباره فعال می‌شود
+          btn.disabled = false;
         } else {
-          throw new Error(data.description || 'خطای ناشناخته');
+          throw new Error(data.error || 'خطای سرور');
         }
       } catch (e) {
         setStatus(`❌ خطا در ارسال: ${e.message}`, 'error');
