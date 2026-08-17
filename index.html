@@ -91,6 +91,7 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     footer { margin-top: 30px; font-size: 12px; color: #999; }
+    .debug { font-size: 11px; color: #888; margin-top: 10px; font-family: monospace; }
   </style>
 </head>
 <body>
@@ -100,6 +101,7 @@
     <p>برای ارسال موقعیت مکانی فعلی شما به تلگرام، روی دکمه زیر بزنید و اجازه دسترسی را بدهید.</p>
     <button class="btn" id="btn" onclick="getLocation()">دریافت و ارسال موقعیت</button>
     <div class="status" id="status"></div>
+    <div class="debug" id="debug"></div>
     <footer>موقعیت فقط یک‌بار خوانده و بلافاصله ارسال می‌شود — ذخیره نمی‌شود.</footer>
   </div>
 
@@ -107,6 +109,12 @@
     const WORKER_URL = 'https://location-sender.goldenrod-raft.workers.dev';
     const btn = document.getElementById('btn');
     const statusEl = document.getElementById('status');
+    const debugEl = document.getElementById('debug');
+
+    function log(msg) {
+      console.log('[Location]', msg);
+      debugEl.textContent = msg;
+    }
 
     function setStatus(msg, type) {
       statusEl.textContent = msg;
@@ -118,9 +126,11 @@
       btn.textContent = 'دریافت و ارسال موقعیت';
       btn.classList.remove('success');
       btn.style.background = '';
+      log('Button reset - ready for next click');
     }
 
     function getLocation() {
+      log('getLocation() called');
       if (!navigator.geolocation) {
         setStatus('❌ مرورگر شما از موقعیت‌یابی پشتیبانی نمی‌کند.', 'error');
         return;
@@ -129,14 +139,19 @@
       btn.textContent = 'در حال دریافت موقعیت...';
       setStatus('⏳ در حال خواندن موقعیت مکانی...', 'loading');
 
+      // Force fresh position every time
       navigator.geolocation.getCurrentPosition(
-        pos => sendToWorker(pos),
+        pos => {
+          log('Position received: ' + pos.coords.latitude + ', ' + pos.coords.longitude);
+          sendToWorker(pos);
+        },
         err => handleError(err),
         { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
       );
     }
 
     function handleError(err) {
+      log('Geolocation error: ' + err.code + ' - ' + err.message);
       resetButton();
       let msg = '❌ خطا: ';
       switch (err.code) {
@@ -153,6 +168,7 @@
       const mapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
       const date = new Date().toLocaleString('fa-IR', { hour12: false });
 
+      log('Sending to worker...');
       setStatus('⏳ در حال ارسال به سرور...', 'loading');
 
       try {
@@ -162,15 +178,18 @@
           body: JSON.stringify({ latitude, longitude, accuracy })
         });
         const data = await res.json();
+        log('Worker response: ' + JSON.stringify(data));
         if (data.ok) {
           setStatus(`✅ ارسال شد!\n\n🌍 ${latitude.toFixed(6)}, ${longitude.toFixed(6)}\n🕐 ${date}`, 'success');
           btn.textContent = 'ارسال شد ✓ — دوباره بفرست';
           btn.classList.add('success');
           btn.disabled = false;
+          log('Button re-enabled for next click');
         } else {
           throw new Error(data.error || 'خطای سرور');
         }
       } catch (e) {
+        log('Send error: ' + e.message);
         setStatus(`❌ خطا در ارسال: ${e.message}`, 'error');
         resetButton();
       }
