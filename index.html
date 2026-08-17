@@ -46,8 +46,18 @@
     .status.load { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
     .spinner { display:inline-block; width:16px; height:16px; border:2px solid #bfdbfe; border-top-color:#2563eb; border-radius:50%; animation:spin 1s linear infinite; margin-left:8px; vertical-align:middle; }
     @keyframes spin { to { transform:rotate(360deg); } }
-    .debug { margin-top:12px; font-size:11px; color:#888; font-family:monospace; min-height:18px; text-align:left; direction:ltr; }
-    footer { margin-top:24px; font-size:11px; color:#aaa; }
+    .debug {
+      margin-top: 16px; padding: 12px; background: #1e1e1e; color: #0f0;
+      border-radius: 8px; font-size: 11px; font-family: monospace;
+      min-height: 100px; max-height: 200px; overflow-y: auto;
+      text-align: left; direction: ltr; white-space: pre-wrap;
+      border: 1px solid #333;
+    }
+    .debug-line { margin: 2px 0; }
+    .debug-line.error { color: #f88; }
+    .debug-line.warn { color: #ff8; }
+    .debug-line.ok { color: #8f8; }
+    footer { margin-top: 24px; font-size: 11px; color: #aaa; }
   </style>
 </head>
 <body>
@@ -57,7 +67,7 @@
     <p class="subtitle">دکمه را بزنید، اجازه دهید، مختصات به تلگرام ارسال می‌شود.</p>
     <button class="btn" id="btn" onclick="getLoc()">دریافت و ارسال موقعیت</button>
     <div class="status" id="st"></div>
-    <div class="debug" id="db"></div>
+    <div class="debug" id="db">=== DEBUG LOG START ===</div>
     <footer>فقط یک‌بار خوانده و بلافاصله ارسال می‌شود — ذخیره نمی‌شود.</footer>
   </div>
 <script>
@@ -67,20 +77,26 @@ const st = document.getElementById('st');
 const db = document.getElementById('db');
 let tryCount = 0;
 
-function log(msg) {
+function log(msg, type = '') {
   console.log('[LOC]', msg);
-  db.textContent = msg;
+  const line = document.createElement('div');
+  line.className = 'debug-line' + (type ? ' ' + type : '');
+  line.textContent = '[' + new Date().toLocaleTimeString('fa-IR') + '] ' + msg;
+  db.appendChild(line);
+  db.scrollTop = db.scrollHeight;
 }
+
 function status(msg, type) {
   st.textContent = msg;
   st.className = 'status show ' + type;
 }
+
 function ready() {
   btn.disabled = false;
   btn.textContent = 'دریافت و ارسال موقعیت';
   btn.classList.remove('success');
   btn.style.background = '';
-  log('✅ Ready for next click');
+  log('✅ Ready for next click', 'ok');
 }
 
 function getLoc() {
@@ -90,8 +106,9 @@ function getLoc() {
   btn.disabled = true; btn.textContent = 'در حال دریافت GPS...'; status('⏳ Waiting for GPS fix...', 'load');
   navigator.geolocation.getCurrentPosition(onOk, onErr, { enableHighAccuracy:true, timeout:20000, maximumAge:0 });
 }
+
 function onErr(e) {
-  log('❌ Err ' + e.code + ': ' + e.message);
+  log('❌ Err ' + e.code + ': ' + e.message, 'error');
   let m = '❌ ';
   if (e.code===1) m += 'Permission denied. Tap lock icon → Location → Allow → Reload.';
   else if (e.code===2) m += 'GPS unavailable. Enable GPS, go outdoors, High accuracy mode.';
@@ -99,37 +116,38 @@ function onErr(e) {
   else m += e.message;
   status(m, 'err'); ready();
 }
+
 async function onOk(p) {
   const {latitude, longitude, accuracy} = p.coords;
-  log('📍 Got: ' + latitude.toFixed(6) + ', ' + longitude.toFixed(6) + ' (±' + Math.round(accuracy) + 'm)');
+  log('📍 Got: ' + latitude.toFixed(6) + ', ' + longitude.toFixed(6) + ' (±' + Math.round(accuracy) + 'm)', 'ok');
   status('⏳ Sending to server...', 'load');
   try {
     log('📤 POST to: ' + ENDPOINT);
     
     // Test connectivity first
-    log('🔍 Testing connectivity...');
+    log('🔍 Testing connectivity (OPTIONS)...');
     const testRes = await fetch(ENDPOINT, {method:'OPTIONS'});
-    log('🔍 OPTIONS test: ' + testRes.status);
+    log('🔍 OPTIONS test: ' + testRes.status, testRes.ok ? 'ok' : 'error');
     
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000);
     const r = await fetch(ENDPOINT, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({latitude,longitude,accuracy}), signal: controller.signal});
     clearTimeout(timeout);
-    log('📥 Response status: ' + r.status + ' ' + r.statusText);
+    log('📥 Response status: ' + r.status + ' ' + r.statusText, r.ok ? 'ok' : 'error');
     log('📥 Response headers: ' + [...r.headers.entries()].map(([k,v])=>k+':'+v).join(', '));
     const text = await r.text();
     log('📥 Raw response: ' + text.substring(0, 200));
     let j;
-    try { j = JSON.parse(text); } catch (e) { log('📥 JSON parse failed: ' + e.message); throw new Error('Invalid JSON: ' + text.substring(0,100)); }
+    try { j = JSON.parse(text); } catch (e) { log('📥 JSON parse failed: ' + e.message, 'error'); throw new Error('Invalid JSON: ' + text.substring(0,100)); }
     if (!j.ok) throw new Error(j.error||'Server error');
-    log('📨 Server OK');
+    log('📨 Server OK', 'ok');
     status('✅ Sent!\n🌍 ' + latitude.toFixed(6) + ', ' + longitude.toFixed(6) + '\n🎯 ±' + Math.round(accuracy) + 'm\n🕐 ' + new Date().toLocaleString('fa-IR'), 'ok');
     btn.textContent = '✅ ارسال شد — دوباره بفرست'; btn.classList.add('success'); btn.disabled = false;
-    log('✅ Done. Button re-enabled.');
+    log('✅ Done. Button re-enabled.', 'ok');
   } catch (e) {
-    log('📨 Send failed: ' + e.name + ': ' + e.message);
-    if (e.name === 'AbortError') log('📨 Timeout (25s)');
-    if (e.name === 'TypeError') log('📨 Network error - check: offline, CORS, adblocker, private mode restrictions');
+    log('📨 Send failed: ' + e.name + ': ' + e.message, 'error');
+    if (e.name === 'AbortError') log('📨 Timeout (25s)', 'warn');
+    if (e.name === 'TypeError') log('📨 Network error - check: offline, CORS, adblocker, private mode restrictions', 'warn');
     status('❌ Send error: ' + e.message + ' (' + e.name + ')', 'err'); ready();
   }
 }
