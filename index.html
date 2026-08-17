@@ -91,7 +91,6 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     footer { margin-top: 30px; font-size: 12px; color: #999; }
-    .debug { font-size: 11px; color: #888; margin-top: 10px; font-family: monospace; }
   </style>
 </head>
 <body>
@@ -99,9 +98,8 @@
     <div class="icon">📍</div>
     <h1>ارسال موقعیت مکانی</h1>
     <p>برای ارسال موقعیت مکانی فعلی شما به تلگرام، روی دکمه زیر بزنید و اجازه دسترسی را بدهید.</p>
-    <button class="btn" id="btn" onclick="getLocation()">دریافت و ارسال موقعیت</button>
+    <button class="btn" id="btn" onclick="getFreshLocation()">دریافت و ارسال موقعیت</button>
     <div class="status" id="status"></div>
-    <div class="debug" id="debug"></div>
     <footer>موقعیت فقط یک‌بار خوانده و بلافاصله ارسال می‌شود — ذخیره نمی‌شود.</footer>
   </div>
 
@@ -109,12 +107,7 @@
     const WORKER_URL = 'https://location-sender.goldenrod-raft.workers.dev';
     const btn = document.getElementById('btn');
     const statusEl = document.getElementById('status');
-    const debugEl = document.getElementById('debug');
-
-    function log(msg) {
-      console.log('[Location]', msg);
-      debugEl.textContent = msg;
-    }
+    let watchId = null;
 
     function setStatus(msg, type) {
       statusEl.textContent = msg;
@@ -126,38 +119,54 @@
       btn.textContent = 'دریافت و ارسال موقعیت';
       btn.classList.remove('success');
       btn.style.background = '';
-      log('Button reset - ready for next click');
     }
 
-    function getLocation() {
-      log('getLocation() called');
+    function stopWatch() {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+      }
+    }
+
+    function getFreshLocation() {
       if (!navigator.geolocation) {
         setStatus('❌ مرورگر شما از موقعیت‌یابی پشتیبانی نمی‌کند.', 'error');
         return;
       }
       btn.disabled = true;
       btn.textContent = 'در حال دریافت موقعیت...';
-      setStatus('⏳ در حال خواندن موقعیت مکانی...', 'loading');
+      setStatus('⏳ در حال دریافت موقعیت دقیق (GPS)...', 'loading');
+      stopWatch();
 
-      // Force fresh position every time
-      navigator.geolocation.getCurrentPosition(
+      // Use watchPosition for fresh GPS fix each time
+      watchId = navigator.geolocation.watchPosition(
         pos => {
-          log('Position received: ' + pos.coords.latitude + ', ' + pos.coords.longitude);
+          stopWatch();
           sendToWorker(pos);
         },
-        err => handleError(err),
+        err => {
+          stopWatch();
+          handleError(err);
+        },
         { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
       );
+
+      // Fallback timeout
+      setTimeout(() => {
+        if (watchId !== null) {
+          stopWatch();
+          handleError({ code: 3, message: 'Timeout - 위치 획득 실패' });
+        }
+      }, 20000);
     }
 
     function handleError(err) {
-      log('Geolocation error: ' + err.code + ' - ' + err.message);
       resetButton();
       let msg = '❌ خطا: ';
       switch (err.code) {
-        case 1: msg += 'دسترسی به موقعیت رد شد.'; break;
-        case 2: msg += 'موقعیت در دسترس نیست.'; break;
-        case 3: msg += 'زمان‌بر شدید (timeout).'; break;
+        case 1: msg += 'دسترسی به موقعیت رد شد. آیکون قفل کنار آدرس را بزنید و Allow کنید.'; break;
+        case 2: msg += 'موقعیت در دسترس نیست. GPS را روشن کنید و در فضای باز تلاش کنید.'; break;
+        case 3: msg += 'زمان‌بر شدید. دوباره تلاش کنید.'; break;
         default: msg += err.message;
       }
       setStatus(msg, 'error');
@@ -165,10 +174,8 @@
 
     async function sendToWorker(pos) {
       const { latitude, longitude, accuracy } = pos.coords;
-      const mapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
       const date = new Date().toLocaleString('fa-IR', { hour12: false });
 
-      log('Sending to worker...');
       setStatus('⏳ در حال ارسال به سرور...', 'loading');
 
       try {
@@ -178,18 +185,15 @@
           body: JSON.stringify({ latitude, longitude, accuracy })
         });
         const data = await res.json();
-        log('Worker response: ' + JSON.stringify(data));
         if (data.ok) {
-          setStatus(`✅ ارسال شد!\n\n🌍 ${latitude.toFixed(6)}, ${longitude.toFixed(6)}\n🕐 ${date}`, 'success');
+          setStatus(`✅ ارسال شد!\n\n🌍 ${latitude.toFixed(6)}, ${longitude.toFixed(6)}\n🎯 دقت: ~${Math.round(accuracy)}م\n🕐 ${date}`, 'success');
           btn.textContent = 'ارسال شد ✓ — دوباره بفرست';
           btn.classList.add('success');
           btn.disabled = false;
-          log('Button re-enabled for next click');
         } else {
           throw new Error(data.error || 'خطای سرور');
         }
       } catch (e) {
-        log('Send error: ' + e.message);
         setStatus(`❌ خطا در ارسال: ${e.message}`, 'error');
         resetButton();
       }
