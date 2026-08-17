@@ -104,7 +104,9 @@ async function onOk(p) {
   log('📍 Got: ' + latitude.toFixed(6) + ', ' + longitude.toFixed(6) + ' (±' + Math.round(accuracy) + 'm)');
   status('⏳ Sending to server...', 'load');
   try {
+    log('📤 POST to: ' + ENDPOINT);
     const r = await fetch(ENDPOINT, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({latitude,longitude,accuracy})});
+    log('📥 Response status: ' + r.status);
     const j = await r.json();
     if (!j.ok) throw new Error(j.error||'Server error');
     log('📨 Server OK');
@@ -112,8 +114,8 @@ async function onOk(p) {
     btn.textContent = '✅ ارسال شد — دوباره بفرست'; btn.classList.add('success'); btn.disabled = false;
     log('✅ Done. Button re-enabled.');
   } catch (e) {
-    log('📨 Send failed: ' + e.message);
-    status('❌ Send error: ' + e.message, 'err'); ready();
+    log('📨 Send failed: ' + e.name + ': ' + e.message);
+    status('❌ Send error: ' + e.message + ' (' + e.name + ')', 'err'); ready();
   }
 }
 </script>
