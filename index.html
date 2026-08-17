@@ -105,6 +105,12 @@ async function onOk(p) {
   status('⏳ Sending to server...', 'load');
   try {
     log('📤 POST to: ' + ENDPOINT);
+    
+    // Test connectivity first
+    log('🔍 Testing connectivity...');
+    const testRes = await fetch(ENDPOINT, {method:'OPTIONS'});
+    log('🔍 OPTIONS test: ' + testRes.status);
+    
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000);
     const r = await fetch(ENDPOINT, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({latitude,longitude,accuracy}), signal: controller.signal});
@@ -123,6 +129,7 @@ async function onOk(p) {
   } catch (e) {
     log('📨 Send failed: ' + e.name + ': ' + e.message);
     if (e.name === 'AbortError') log('📨 Timeout (25s)');
+    if (e.name === 'TypeError') log('📨 Network error - check: offline, CORS, adblocker, private mode restrictions');
     status('❌ Send error: ' + e.message + ' (' + e.name + ')', 'err'); ready();
   }
 }
