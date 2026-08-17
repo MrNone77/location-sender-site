@@ -7,7 +7,7 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: system-ui, -apple-system, sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
       display: flex;
@@ -15,187 +15,107 @@
       justify-content: center;
       padding: 20px;
     }
-    .container {
+    .card {
       background: white;
-      border-radius: 20px;
-      padding: 40px;
-      max-width: 400px;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 380px;
       width: 100%;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.25);
       text-align: center;
     }
-    .icon {
-      width: 80px;
-      height: 80px;
-      margin: 0 auto 20px;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 36px;
-    }
-    h1 { color: #333; margin-bottom: 10px; font-size: 24px; }
-    p { color: #666; margin-bottom: 30px; line-height: 1.6; }
+    .icon { font-size: 48px; margin-bottom: 16px; }
+    h1 { color: #1a1a2e; font-size: 22px; margin-bottom: 8px; }
+    .subtitle { color: #666; font-size: 14px; margin-bottom: 24px; line-height: 1.5; }
     .btn {
-      width: 100%;
-      padding: 16px;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
+      width: 100%; padding: 16px; border: none; border-radius: 10px;
+      font-size: 16px; font-weight: 600; cursor: pointer;
+      background: linear-gradient(135deg, #667eea, #764ba2); color: white;
+      transition: transform .2s, box-shadow .2s;
     }
-    .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(102,126,234,0.4); }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-    .btn.success { background: linear-gradient(135deg, #4caf50, #388e3c); }
+    .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(102,126,234,.4); }
+    .btn:disabled { opacity: .55; cursor: not-allowed; }
+    .btn.success { background: linear-gradient(135deg, #22c55e, #16a34a); }
     .status {
-      margin-top: 20px;
-      padding: 16px;
-      border-radius: 12px;
-      display: none;
-      font-size: 14px;
-      line-height: 1.6;
+      margin-top: 16px; padding: 14px; border-radius: 10px; display: none;
+      font-size: 13px; line-height: 1.6; text-align: right;
     }
-    .status.success {
-      display: block;
-      background: #e8f5e9;
-      color: #2e7d32;
-      border: 1px solid #c8e6c9;
-    }
-    .status.error {
-      display: block;
-      background: #fbe9e7;
-      color: #c62828;
-      border: 1px solid #ffccbc;
-    }
-    .status.loading {
-      display: block;
-      background: #e3f2fd;
-      color: #1565c0;
-      border: 1px solid #bbdefb;
-    }
-    .spinner {
-      display: inline-block;
-      width: 18px;
-      height: 18px;
-      border: 3px solid #bbdefb;
-      border-top-color: #1565c0;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-left: 10px;
-      vertical-align: middle;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    footer { margin-top: 30px; font-size: 12px; color: #999; }
-    .debug { font-size: 11px; color: #888; margin-top: 10px; font-family: monospace; min-height: 20px; }
+    .status.show { display: block; }
+    .status.ok { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+    .status.err { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .status.load { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+    .spinner { display:inline-block; width:16px; height:16px; border:2px solid #bfdbfe; border-top-color:#2563eb; border-radius:50%; animation:spin 1s linear infinite; margin-left:8px; vertical-align:middle; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .debug { margin-top:12px; font-size:11px; color:#888; font-family:monospace; min-height:18px; text-align:left; direction:ltr; }
+    footer { margin-top:24px; font-size:11px; color:#aaa; }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="card">
     <div class="icon">📍</div>
     <h1>ارسال موقعیت مکانی</h1>
-    <p>برای ارسال موقعیت مکانی فعلی شما به تلگرام، روی دکمه زیر بزنید و اجازه دسترسی را بدهید.</p>
-    <button class="btn" id="btn" onclick="getLocation()">دریافت و ارسال موقعیت</button>
-    <div class="status" id="status"></div>
-    <div class="debug" id="debug"></div>
-    <footer>موقعیت فقط یک‌بار خوانده و بلافاصله ارسال می‌شود — ذخیره نمی‌شود.</footer>
+    <p class="subtitle">دکمه را بزنید، اجازه دهید، مختصات به تلگرام ارسال می‌شود.</p>
+    <button class="btn" id="btn" onclick="getLoc()">دریافت و ارسال موقعیت</button>
+    <div class="status" id="st"></div>
+    <div class="debug" id="db"></div>
+    <footer>فقط یک‌بار خوانده و بلافاصله ارسال می‌شود — ذخیره نمی‌شود.</footer>
   </div>
+<script>
+const ENDPOINT = 'https://location-sender.goldenrod-raft.workers.dev';
+const btn = document.getElementById('btn');
+const st = document.getElementById('st');
+const db = document.getElementById('db');
+let tryCount = 0;
 
-  <script>
-    const WORKER_URL = 'https://location-sender.goldenrod-raft.workers.dev';
-    const btn = document.getElementById('btn');
-    const statusEl = document.getElementById('status');
-    const debugEl = document.getElementById('debug');
-    let attempt = 0;
+function log(msg) {
+  console.log('[LOC]', msg);
+  db.textContent = msg;
+}
+function status(msg, type) {
+  st.textContent = msg;
+  st.className = 'status show ' + type;
+}
+function ready() {
+  btn.disabled = false;
+  btn.textContent = 'دریافت و ارسال موقعیت';
+  btn.classList.remove('success');
+  btn.style.background = '';
+  log('✅ Ready for next click');
+}
 
-    function log(msg) {
-      console.log('[Location]', msg);
-      debugEl.textContent = msg;
-    }
-
-    function setStatus(msg, type) {
-      statusEl.textContent = msg;
-      statusEl.className = 'status ' + type;
-    }
-
-    function resetButton() {
-      btn.disabled = false;
-      btn.textContent = 'دریافت و ارسال موقعیت';
-      btn.classList.remove('success');
-      btn.style.background = '';
-      log('Ready for next click');
-    }
-
-    function getLocation() {
-      attempt++;
-      log('Attempt #' + attempt + ' - Requesting fresh position...');
-      
-      if (!navigator.geolocation) {
-        setStatus('❌ مرورگر شما از موقعیت‌یابی پشتیبانی نمی‌کند.', 'error');
-        return;
-      }
-      btn.disabled = true;
-      btn.textContent = 'در حال دریافت موقعیت...';
-      setStatus('⏳ در حال دریافت موقعیت دقیق (GPS)...', 'loading');
-
-      // Force fresh position with getCurrentPosition - maximumAge: 0 forces fresh
-      navigator.geolocation.getCurrentPosition(
-        pos => {
-          log('Got position: ' + pos.coords.latitude.toFixed(6) + ', ' + pos.coords.longitude.toFixed(6) + ' (acc: ' + Math.round(pos.coords.accuracy) + 'm)');
-          sendToWorker(pos);
-        },
-        err => handleError(err),
-        { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
-      );
-    }
-
-    function handleError(err) {
-      log('Error: ' + err.code + ' - ' + err.message);
-      resetButton();
-      let msg = '❌ خطا: ';
-      switch (err.code) {
-        case 1: msg += 'دسترسی رد شد. آیکون قفل کنار آدرس → Location → Allow → Reload'; break;
-        case 2: msg += 'موقعیت در دسترس نیست. GPS روشن، فضای باز.'; break;
-        case 3: msg += 'تایم‌اوت. دوباره تلاش کنید.'; break;
-        default: msg += err.message;
-      }
-      setStatus(msg, 'error');
-    }
-
-    async function sendToWorker(pos) {
-      const { latitude, longitude, accuracy } = pos.coords;
-      const date = new Date().toLocaleString('fa-IR', { hour12: false });
-
-      log('Sending to worker...');
-      setStatus('⏳ در حال ارسال...', 'loading');
-
-      try {
-        const res = await fetch(WORKER_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ latitude, longitude, accuracy })
-        });
-        const data = await res.json();
-        log('Worker response: ' + (data.ok ? 'OK' : 'Error: ' + (data.error || 'unknown')));
-        if (data.ok) {
-          setStatus(`✅ ارسال شد!\n\n🌍 ${latitude.toFixed(6)}, ${longitude.toFixed(6)}\n🎯 دقت: ~${Math.round(accuracy)}م\n🕐 ${date}`, 'success');
-          btn.textContent = 'ارسال شد ✓ — دوباره بفرست';
-          btn.classList.add('success');
-          btn.disabled = false;
-          log('Done. Button ready.');
-        } else {
-          throw new Error(data.error || 'خطای سرور');
-        }
-      } catch (e) {
-        log('Send error: ' + e.message);
-        setStatus(`❌ خطا در ارسال: ${e.message}`, 'error');
-        resetButton();
-      }
-    }
-  </script>
+function getLoc() {
+  tryCount++;
+  log('▶ Try #' + tryCount + ' – requesting GPS...');
+  if (!navigator.geolocation) { status('❌ Browser unsupported', 'err'); return; }
+  btn.disabled = true; btn.textContent = 'در حال دریافت GPS...'; status('⏳ Waiting for GPS fix...', 'load');
+  navigator.geolocation.getCurrentPosition(onOk, onErr, { enableHighAccuracy:true, timeout:20000, maximumAge:0 });
+}
+function onErr(e) {
+  log('❌ Err ' + e.code + ': ' + e.message);
+  let m = '❌ ';
+  if (e.code===1) m += 'Permission denied. Tap lock icon → Location → Allow → Reload.';
+  else if (e.code===2) m += 'GPS unavailable. Enable GPS, go outdoors, High accuracy mode.';
+  else if (e.code===3) m += 'Timeout. Try again.';
+  else m += e.message;
+  status(m, 'err'); ready();
+}
+async function onOk(p) {
+  const {latitude, longitude, accuracy} = p.coords;
+  log('📍 Got: ' + latitude.toFixed(6) + ', ' + longitude.toFixed(6) + ' (±' + Math.round(accuracy) + 'm)');
+  status('⏳ Sending to server...', 'load');
+  try {
+    const r = await fetch(ENDPOINT, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({latitude,longitude,accuracy})});
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error||'Server error');
+    log('📨 Server OK');
+    status('✅ Sent!\n🌍 ' + latitude.toFixed(6) + ', ' + longitude.toFixed(6) + '\n🎯 ±' + Math.round(accuracy) + 'm\n🕐 ' + new Date().toLocaleString('fa-IR'), 'ok');
+    btn.textContent = '✅ ارسال شد — دوباره بفرست'; btn.classList.add('success'); btn.disabled = false;
+    log('✅ Done. Button re-enabled.');
+  } catch (e) {
+    log('📨 Send failed: ' + e.message);
+    status('❌ Send error: ' + e.message, 'err'); ready();
+  }
+}
+</script>
 </body>
 </html>
