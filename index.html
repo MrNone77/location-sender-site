@@ -124,10 +124,18 @@ async function onOk(p) {
   try {
     log('📤 POST to: ' + ENDPOINT);
     
-    // Test connectivity first
+    // Test connectivity first (with timeout)
     log('🔍 Testing connectivity (OPTIONS)...');
-    const testRes = await fetch(ENDPOINT, {method:'OPTIONS'});
-    log('🔍 OPTIONS test: ' + testRes.status, testRes.ok ? 'ok' : 'error');
+    const testCtrl = new AbortController();
+    const testTimeout = setTimeout(() => testCtrl.abort(), 10000);
+    let testRes;
+    try {
+      testRes = await fetch(ENDPOINT, {method:'OPTIONS', signal: testCtrl.signal});
+      log('🔍 OPTIONS test: ' + testRes.status, testRes.ok ? 'ok' : 'error');
+    } catch (e) {
+      log('🔍 OPTIONS test failed: ' + e.name + ': ' + e.message, 'warn');
+    }
+    clearTimeout(testTimeout);
     
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000);
