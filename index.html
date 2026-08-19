@@ -71,7 +71,7 @@
     <footer>فقط یک‌بار خوانده و بلافاصله ارسال می‌شود — ذخیره نمی‌شود.</footer>
   </div>
 <script>
-const ENDPOINT = 'https://lockamarat.duckdns.org/location';
+const ENDPOINT = 'https://location-sender.vercel.app/api/location';
 const btn = document.getElementById('btn');
 const st = document.getElementById('st');
 const db = document.getElementById('db');
@@ -123,26 +123,11 @@ async function onOk(p) {
   status('⏳ Sending to server...', 'load');
   try {
     log('📤 POST to: ' + ENDPOINT);
-    
-    // Test connectivity first (with timeout)
-    log('🔍 Testing connectivity (OPTIONS)...');
-    const testCtrl = new AbortController();
-    const testTimeout = setTimeout(() => testCtrl.abort(), 10000);
-    let testRes;
-    try {
-      testRes = await fetch(ENDPOINT, {method:'OPTIONS', signal: testCtrl.signal});
-      log('🔍 OPTIONS test: ' + testRes.status, testRes.ok ? 'ok' : 'error');
-    } catch (e) {
-      log('🔍 OPTIONS test failed: ' + e.name + ': ' + e.message, 'warn');
-    }
-    clearTimeout(testTimeout);
-    
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000);
     const r = await fetch(ENDPOINT, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({latitude,longitude,accuracy}), signal: controller.signal});
     clearTimeout(timeout);
     log('📥 Response status: ' + r.status + ' ' + r.statusText, r.ok ? 'ok' : 'error');
-    log('📥 Response headers: ' + [...r.headers.entries()].map(([k,v])=>k+':'+v).join(', '));
     const text = await r.text();
     log('📥 Raw response: ' + text.substring(0, 200));
     let j;
