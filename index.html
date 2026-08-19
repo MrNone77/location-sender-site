@@ -103,8 +103,8 @@ function getLoc() {
   tryCount++;
   log('▶ Try #' + tryCount + ' – requesting GPS...');
   if (!navigator.geolocation) { status('❌ Browser unsupported', 'err'); return; }
-  btn.disabled = true; btn.textContent = 'در حال دریافت GPS...'; status('⏳ Waiting for GPS fix...', 'load');
-  navigator.geolocation.getCurrentPosition(onOk, onErr, { enableHighAccuracy:true, timeout:20000, maximumAge:0 });
+  btn.disabled = true; btn.textContent = 'در حال دریافت GPS...'; status('⏳ Waiting for GPS fix... (outdoors works best)', 'load');
+  navigator.geolocation.getCurrentPosition(onOk, onErr, { enableHighAccuracy:true, timeout:60000, maximumAge:0 });
 }
 
 function onErr(e) {
