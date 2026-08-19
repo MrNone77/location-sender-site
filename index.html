@@ -124,7 +124,7 @@ async function onOk(p) {
   try {
     log('📤 POST to: ' + ENDPOINT);
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 25000);
+    const timeout = setTimeout(() => controller.abort(), 30000);
     const r = await fetch(ENDPOINT, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({latitude,longitude,accuracy}), signal: controller.signal});
     clearTimeout(timeout);
     log('📥 Response status: ' + r.status + ' ' + r.statusText, r.ok ? 'ok' : 'error');
