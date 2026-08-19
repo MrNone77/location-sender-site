@@ -123,10 +123,8 @@ async function onOk(p) {
   status('⏳ Sending to server...', 'load');
   try {
     log('📤 POST to: ' + ENDPOINT);
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
-    const r = await fetch(ENDPOINT, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({latitude,longitude,accuracy}), signal: controller.signal});
-    clearTimeout(timeout);
+    // No timeout - let browser handle it naturally
+    const r = await fetch(ENDPOINT, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({latitude,longitude,accuracy})});
     log('📥 Response status: ' + r.status + ' ' + r.statusText, r.ok ? 'ok' : 'error');
     const text = await r.text();
     log('📥 Raw response: ' + text.substring(0, 200));
@@ -139,8 +137,8 @@ async function onOk(p) {
     log('✅ Done. Button re-enabled.', 'ok');
   } catch (e) {
     log('📨 Send failed: ' + e.name + ': ' + e.message, 'error');
-    if (e.name === 'AbortError') log('📨 Timeout (25s)', 'warn');
-    if (e.name === 'TypeError') log('📨 Network error - check: offline, CORS, adblocker, private mode restrictions', 'warn');
+    if (e.name === 'AbortError') log('📨 Timeout', 'warn');
+    if (e.name === 'TypeError') log('📨 Network error - check: offline, CORS, adblocker', 'warn');
     status('❌ Send error: ' + e.message + ' (' + e.name + ')', 'err'); ready();
   }
 }
